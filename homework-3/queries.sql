@@ -4,8 +4,8 @@
 
 SELECT c.company_name, CONCAT(e.first_name, ' ', e.last_name) as fio
 FROM orders AS o
-LEFT JOIN customers AS c ON o.customer_id=c.customer_id
-LEFT JOIN employees AS e ON o.employee_id=e.employee_id
+LEFT JOIN customers AS c ON USING(customer_id)
+LEFT JOIN employees AS e ON USING(employee_id)
 LEFT JOIN shippers AS s ON o.ship_via=s.shipper_id
 WHERE 1=1
 	AND c.city = 'London'
@@ -19,8 +19,8 @@ WHERE 1=1
 
 SELECT p.product_name, p.units_in_stock, s.contact_name, s.phone
 FROM products as p
-LEFT JOIN categories as c ON p.category_id=c.category_id
-LEFT JOIN suppliers as s ON p.supplier_id=s.supplier_id
+LEFT JOIN categories as c ON USING(category_id)
+LEFT JOIN suppliers as s ON USING(supplier_id)
 WHERE discontinued != 1 and category_name in ('Dairy Products', 'Condiments')
   		AND units_in_stock < 25
 ORDER BY p.units_in_stock
@@ -29,17 +29,14 @@ ORDER BY p.units_in_stock
 
 SELECT c.company_name
 FROM customers AS c
-LEFT JOIN orders AS o ON o.customer_id=c.customer_id
+LEFT JOIN orders AS o ON USING(customer_id)
 WHERE order_id is null
 
 -- 4. уникальные названия продуктов, которых заказано ровно 10 единиц (количество заказанных единиц см в колонке quantity табл order_details)
 -- Этот запрос написать именно с использованием подзапроса.
 
 SELECT DISTINCT product_name
-FROM (
-	SELECT *
-	FROM order_details as od
-	LEFT JOIN products as pr on od.product_id=pr.product_id
-	WHERE quantity=10) as sq
-
--- не совсем понятно зачем тут подзапрос?
+FROM products as pr
+WHERE EXISTS (SELECT *
+                FROM order_details od
+                WHERE quantity=10 AND pr.product_id=od.product_id)
